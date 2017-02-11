@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<script type="text/javascript" src="https://d3js.org/d3.v3.min.js"></script>
+  </head>
+  <body>
+
+    <select id="pitcherSelect"></select>
+    <button onclick="makeChart()">Submit</button><br> 
+    <br>
+    <svg id="chart"></svg>
+    <script>
+        var pitcherNames = [];
+
+
+d3.json("allPitchers.json", function(error, d) {
+    for (var k in d) pitcherNames.push(k);
+
+    var dropDown = d3.select("select");
+
+    var dropDownChoices = dropDown.selectAll("option")
+            .data(pitcherNames)
+            .enter()
+            .append("option");
+
+    var DDCAttributes = dropDownChoices
+            .attr("value", function(d){return d;})
+            .text(function(d){return d;});
+
+
+        var rectangles = svgContainer.selectAll("rect")
+            .data(pitchers)
+            .enter()
+            .append("rect");
+
+        var rectangleAttributes = rectangles
+            .attr("x", function(d) {
+                return (d.xpos - d.width / 2);
+            })
+            .attr("y", function(d) {
+                return (d.ypos - d.height / 2);
+            })
+            .attr("height", function(d) {
+                return d.height;
+            })
+            .attr("width", function(d) {
+                return d.width;
+            })
+            .style("fill", function(d) {
+                return colorFunc(d.num);
+            });
+
+});
+
+
+
+makeChart = function(pitchername) {
+
+    pitchername = document.getElementById('pitcherSelect').value;
+
+    var nodeToDelete = document.getElementById("chart");
+
+    while (nodeToDelete.firstChild) {
+        nodeToDelete.removeChild(nodeToDelete.firstChild);
+    }
+
+    d3.json("allPitchers.json", function(error, d) {
+
+        var data = d[pitchername];
+
+        console.log(data);
+
+        for (var k in d) console.log(k);
+
+        var labels = [{
+                "xpos": 75,
+                "ypos": 150,
+                "text": "3"
+            },
+            {
+                "xpos": 75,
+                "ypos": 250,
+                "text": "2"
+            },
+            {
+                "xpos": 75,
+                "ypos": 350,
+                "text": "1"
+            },
+            {
+                "xpos": 75,
+                "ypos": 450,
+                "text": "0"
+            },
+            {
+                "xpos": 150,
+                "ypos": 525,
+                "text": "0"
+            },
+            {
+                "xpos": 250,
+                "ypos": 525,
+                "text": "1"
+            },
+            {
+                "xpos": 350,
+                "ypos": 525,
+                "text": "2"
+            },
+            {
+                "xpos": 250,
+                "ypos": 550,
+                "text": "Strikes",
+                "weight": "bold"
+            },
+            {
+                "xpos": 50,
+                "ypos": 300,
+                "text": "Balls",
+                "rot": "rotate(270 50,300)",
+                "weight": "bold"
+            }
+        ];
+
+        var pitchers = data.allCounts;
+
+        var max_x = 0;
+        var max_y = 0;
+
+        for (var i = 0; i < pitchers.length; i++) {
+            var temp_x, temp_y;
+            var temp_x = pitchers[i].xpos + pitchers[i].width;
+            var temp_y = pitchers[i].ypos + pitchers[i].height;
+
+            if (temp_x >= max_x) {
+                max_x = temp_x;
+            }
+
+            if (temp_y >= max_y) {
+                max_y = temp_y;
+            }
+        }
+
+        var svgContainer = d3.select("svg")
+            .attr("width", max_x)
+            .attr("height", max_y)
+
+        var colorFunc = d3.scale.linear().domain([0, .5, 1]).range(['yellow', 'orange', 'red']);
+
+
+        var rectangles = svgContainer.selectAll("rect")
+            .data(pitchers)
+            .enter()
+            .append("rect");
+
+        var rectangleAttributes = rectangles
+            .attr("x", function(d) {
+                return (d.xpos - d.width / 2);
+            })
+            .attr("y", function(d) {
+                return (d.ypos - d.height / 2);
+            })
+            .attr("height", function(d) {
+                return d.height;
+            })
+            .attr("width", function(d) {
+                return d.width;
+            })
+            .style("fill", function(d) {
+                return colorFunc(d.num);
+            });
+
+        var textInSquares = svgContainer.selectAll("text.nums")
+            .data(pitchers)
+            .enter()
+            .append("text");
+
+        var textAttributes = textInSquares
+            .attr("x", function(d) {
+                return d.xpos;
+            })
+            .attr("y", function(d) {
+                return d.ypos;
+            })
+            .attr("text-anchor", "middle")
+            .attr("font-family", "Verdana")
+            .text(function(d) {
+                return (d.num * 100).toFixed(0) + "%";
+            });
+
+        var pitchesInSquares = svgContainer.selectAll("text.pitches")
+            .data(pitchers)
+            .enter()
+            .append("text");
+
+        var pitchesAttributes = pitchesInSquares
+            .attr("x", function(d) {
+                return Number(d.xpos);
+            })
+            .attr("y", function(d) {
+                return Number(d.ypos) + 20;
+            })
+            .attr("text-anchor", "middle")
+            .attr("font-family", "Verdana")
+            .text(function(d) {
+                return "(" + d.pitches + " pitches)";
+            })
+            .attr("font-size", 12);
+
+
+        var labelText = svgContainer.selectAll("text.labs")
+            .data(labels)
+            .enter()
+            .append("text");
+
+        var labelAttributes = labelText
+            .attr("x", function(d) {
+                return d.xpos;
+            })
+            .attr("y", function(d) {
+                return d.ypos;
+            })
+            .attr("text-anchor", "middle")
+            .attr("font-family", "Verdana")
+            .attr("transform", function(d) {
+                return d.rot;
+            })
+            .style("font-weight", function(d) {
+                return d.weight;
+            })
+            .text(function(d) {
+                return d.text;
+            });
+
+
+        headerText = svgContainer.append("text")
+            .attr("x", 250)
+            .attr("y", 15)
+            .attr("text-anchor", "middle")
+            .attr("font-family", "Verdana");
+
+        headerText.append("tspan").text(pitchername)
+            .style("font-weight", "bold");
+
+
+        headerText.append("tspan").text("Pitcher Count Predictivity Score: " + Number(data.mixingscore).toFixed(3))
+            .attr("dy", 20).attr("x", 250);
+
+        headerText.append("tspan").text("Rank " + data.num + "/" + data.outof)
+            .attr("dy", 20).attr("x", 250);
+
+        headerText.append("tspan").text("Offspeed percentage by count")
+            .attr("dy", 37).attr("x", 250).style("font-weight", "bold")
+            .attr("font-size", 12);
+
+    });
+};
+
+    </script>
+  </body>
+
+</html>
